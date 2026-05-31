@@ -61,7 +61,7 @@ select = [
 "tests/test_tools.py" = ["E402"]
 "tests/test_protocol.py" = ["E402"]
 "tests/test_mcp_integration.py" = ["E402"]
-"tests/test_web.py" = ["E402"]
+"tests/test_web.py" = ["E402", "I001"]
 "tests/test_compliance.py" = ["E402"]
 "server.py" = ["E402"]
 

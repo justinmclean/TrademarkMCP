@@ -7,15 +7,13 @@ from typing import Any
 PROPOSED_NAME_PROPERTY = {
     "type": "string",
     "description": (
-        "Proposed project name, WITHOUT the 'Apache' prefix "
-        "(e.g. 'Kafka', not 'Apache Kafka')"
+        "Proposed project name, WITHOUT the 'Apache' prefix (e.g. 'Kafka', not 'Apache Kafka')"
     ),
 }
 TECHNICAL_DESCRIPTION_PROPERTY = {
     "type": "string",
     "description": (
-        "Brief description of what the project does; used to assess "
-        "relevance of search hits"
+        "Brief description of what the project does; used to assess relevance of search hits"
     ),
 }
 QUERY_PROPERTY = {

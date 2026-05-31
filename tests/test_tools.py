@@ -103,8 +103,8 @@ class BrandingAndPolicyTests(unittest.TestCase):
 
 class CheckProjectWebsiteTests(unittest.TestCase):
     def test_passes_when_fetch_returns_compliant_html(self) -> None:
-        from tests.html_fixtures import COMPLIANT_PROJECT_HTML
         from apache_trademark_mcp import web
+        from tests.html_fixtures import COMPLIANT_PROJECT_HTML
 
         def fake_fetch(url: str, timeout: float = 15.0) -> web.FetchedPage:
             title, headings, links, images, text = web.parse_html(COMPLIANT_PROJECT_HTML)
@@ -132,8 +132,8 @@ class CheckProjectWebsiteTests(unittest.TestCase):
 
 class CheckThirdPartyUseTests(unittest.TestCase):
     def test_flags_bare_mark_as_sld(self) -> None:
-        from tests.html_fixtures import NONCOMPLIANT_THIRD_PARTY_HTML
         from apache_trademark_mcp import web
+        from tests.html_fixtures import NONCOMPLIANT_THIRD_PARTY_HTML
 
         def fake_fetch(url: str, timeout: float = 15.0) -> web.FetchedPage:
             title, headings, links, images, text = web.parse_html(NONCOMPLIANT_THIRD_PARTY_HTML)

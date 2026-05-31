@@ -320,8 +320,7 @@ def jira_template(
     uspto_query = f"(({name})[BI,TI] AND (software or computer)[GS] AND (live)[LD])"
 
     description = technical_description or (
-        "(REQUIRED: add a brief description of what the project does and "
-        "its technical space)"
+        "(REQUIRED: add a brief description of what the project does and its technical space)"
     )
     summary_note = (
         "(Report facts only. Do not interpret or give opinions on likelihood "

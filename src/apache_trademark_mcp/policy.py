@@ -517,8 +517,7 @@ def _podling_branding_extras() -> list[dict]:
             "item": "PODLINGNAMESEARCH JIRA ticket filed and approved",
             "required": True,
             "detail": (
-                "VP Brand Management must have approved the name. "
-                "Required before graduation."
+                "VP Brand Management must have approved the name. Required before graduation."
             ),
             "url": "https://issues.apache.org/jira/projects/PODLINGNAMESEARCH",
         },
@@ -570,8 +569,7 @@ def _graduation_branding_extras() -> list[dict]:
             "item": "VP Brand Management confirms name approval is on record",
             "required": True,
             "detail": (
-                "Confirm the PODLINGNAMESEARCH ticket is resolved and approval "
-                "is documented."
+                "Confirm the PODLINGNAMESEARCH ticket is resolved and approval is documented."
             ),
         },
     ]
