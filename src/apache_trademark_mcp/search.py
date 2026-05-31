@@ -319,11 +319,21 @@ def jira_template(
 
     uspto_query = f"(({name})[BI,TI] AND (software or computer)[GS] AND (live)[LD])"
 
+    description = technical_description or (
+        "(REQUIRED: add a brief description of what the project does and "
+        "its technical space)"
+    )
+    summary_note = (
+        "(Report facts only. Do not interpret or give opinions on likelihood "
+        "of confusion — that assessment is made by trademarks@apache.org and "
+        "the VP Brand Management.)"
+    )
+
     return f"""h2. Proposed Name
 Apache {name}
 
 h2. Project Description
-{technical_description or "(REQUIRED: add a brief description of what the project does and its technical space)"}
+{description}
 
 h2. GitHub Search Results
 {gh_line()}
@@ -347,5 +357,5 @@ Search at: https://tmsearch.uspto.gov
 Results: (add number of hits and any matching live marks here)
 
 h2. Summary of Findings
-(Report facts only. Do not interpret or give opinions on likelihood of confusion — that assessment is made by trademarks@apache.org and the VP Brand Management.)
+{summary_note}
 """

@@ -17,7 +17,8 @@ from tests.fixtures import FAKE_PROJECTS
 
 
 class CacheFixture:
-    """Context manager that points the tools module at a tempdir cache prepopulated with FAKE_PROJECTS."""
+    """Context manager that points the tools module at a tempdir cache
+    prepopulated with FAKE_PROJECTS."""
 
     def __init__(self) -> None:
         self._tmp = tempfile.TemporaryDirectory()

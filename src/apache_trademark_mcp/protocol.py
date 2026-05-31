@@ -190,7 +190,10 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Apache Trademark MCP server")
     parser.add_argument(
         "--cache-dir",
-        help="Directory used to cache the ASF project list (default: ~/.cache/apache-trademark-mcp)",
+        help=(
+            "Directory used to cache the ASF project list "
+            "(default: ~/.cache/apache-trademark-mcp)"
+        ),
     )
     return parser.parse_args(argv)
 

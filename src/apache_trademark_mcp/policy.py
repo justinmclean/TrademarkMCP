@@ -414,7 +414,8 @@ def _base_branding_checklist() -> list[dict]:
             "detail": (
                 "Must describe what the software does as a product — e.g. "
                 "'Apache Foo software provides X functionality.' "
-                "Calling it a 'project' or 'community' alone is insufficient for trademark purposes."
+                "Calling it a 'project' or 'community' alone is insufficient for "
+                "trademark purposes."
             ),
         },
         {
@@ -515,7 +516,10 @@ def _podling_branding_extras() -> list[dict]:
         {
             "item": "PODLINGNAMESEARCH JIRA ticket filed and approved",
             "required": True,
-            "detail": "VP Brand Management must have approved the name. Required before graduation.",
+            "detail": (
+                "VP Brand Management must have approved the name. "
+                "Required before graduation."
+            ),
             "url": "https://issues.apache.org/jira/projects/PODLINGNAMESEARCH",
         },
         {
@@ -557,12 +561,18 @@ def _graduation_branding_extras() -> list[dict]:
         {
             "item": "Incubation disclaimers and '(Incubating)' suffixes removed",
             "required": True,
-            "detail": "After graduation, all incubation references must be removed from the site and docs.",
+            "detail": (
+                "After graduation, all incubation references must be removed "
+                "from the site and docs."
+            ),
         },
         {
             "item": "VP Brand Management confirms name approval is on record",
             "required": True,
-            "detail": "Confirm the PODLINGNAMESEARCH ticket is resolved and approval is documented.",
+            "detail": (
+                "Confirm the PODLINGNAMESEARCH ticket is resolved and approval "
+                "is documented."
+            ),
         },
     ]
 
@@ -631,7 +641,10 @@ _GUIDANCE: dict[str, dict] = {
             "Must credit the Apache project community.",
             "Must link to Apache project mailing lists and resources.",
             "No use of 'Apache' or 'Community Over Code' in domain names.",
-            "Only top-level project VPs (not podling PPMCs) may grant third-party domain permissions.",
+            (
+                "Only top-level project VPs (not podling PPMCs) may grant "
+                "third-party domain permissions."
+            ),
         ],
     },
     "third_party_use": {
@@ -759,7 +772,10 @@ _GUIDANCE: dict[str, dict] = {
             "Third-party websites may not use Apache logos as their own brand elements.",
             "Do not modify the appearance of any Apache logo.",
             "Do not use the ASF feather graphic mark in your own logo.",
-            "Derivative logos are permitted under the Apache License but must not be confusingly similar.",
+            (
+                "Derivative logos are permitted under the Apache License but "
+                "must not be confusingly similar."
+            ),
             "Project logos must include a small TM symbol.",
         ],
     },
@@ -775,7 +791,11 @@ _GUIDANCE: dict[str, dict] = {
             "No permission required to reference Apache marks in books or articles.",
             "May use marks in book titles: 'Foo for Dummies', 'Learning Apache Foo'.",
             "Prefer 'Apache Foo' over just 'Foo' in the title when it fits.",
-            "Include trademark attribution in acknowledgments: 'Apache, Apache Foo, and Foo are trademarks of the Apache Software Foundation.'",
+            (
+                "Include trademark attribution in acknowledgments: "
+                "'Apache, Apache Foo, and Foo are trademarks of the Apache "
+                "Software Foundation.'"
+            ),
         ],
     },
 }

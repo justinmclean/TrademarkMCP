@@ -105,9 +105,11 @@ def _podlingnamesearch_process(name: str) -> dict:
                 "action": "Search the USPTO trademark database (required)",
                 "url": "https://tmsearch.uspto.gov",
                 "detail": (
-                    f"Search USPTO for: ({name})[BI,TI] and (software or computer)[GS] and (live)[LD]. "
-                    "Record the search results (number of hits, any matching marks) in your JIRA ticket. "
-                    "Report facts only — do not interpret or opine on likelihood of confusion."
+                    f"Search USPTO for: ({name})[BI,TI] and "
+                    "(software or computer)[GS] and (live)[LD]. "
+                    "Record the search results (number of hits, any matching "
+                    "marks) in your JIRA ticket. Report facts only — do not "
+                    "interpret or opine on likelihood of confusion."
                 ),
                 "required": True,
             },
