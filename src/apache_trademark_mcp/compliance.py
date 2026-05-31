@@ -30,9 +30,9 @@ SKIP = "skip"  # rule could not be evaluated (e.g. fetch failed)
 # violations from missing positive evidence — important for third-party pages,
 # where "no apache.org credit link" and "domain spoofs apache.org" should not
 # carry the same weight.
-CRITICAL = "critical"    # active policy violation; one of these forces FAIL
+CRITICAL = "critical"  # active policy violation; one of these forces FAIL
 IMPORTANT = "important"  # warrants a human look (default for branding/disclaimer)
-ADVISORY = "advisory"    # nice-to-have (e.g. missing credit link)
+ADVISORY = "advisory"  # nice-to-have (e.g. missing credit link)
 
 _RANK = {FAIL: 3, WARN: 2, INFO: 1, PASS: 0, SKIP: 0}
 
@@ -118,8 +118,7 @@ class ComplianceReport:
             return "PASS"
 
         has_critical_fail = any(
-            f.status == FAIL and f.effective_severity() == CRITICAL
-            for f in self.findings
+            f.status == FAIL and f.effective_severity() == CRITICAL for f in self.findings
         )
         if has_critical_fail:
             return "FAIL"
@@ -202,9 +201,7 @@ def _find_first_occurrence(text: str, project_name: str) -> tuple[int, str]:
 
 def _has_tm_or_r_near(window: str) -> bool:
     """Return True if a TM/(R) marker appears within ``window``."""
-    return bool(
-        re.search(r"™|®|\(\s*TM\s*\)|\(\s*R\s*\)", window, flags=re.IGNORECASE)
-    )
+    return bool(re.search(r"™|®|\(\s*TM\s*\)|\(\s*R\s*\)", window, flags=re.IGNORECASE))
 
 
 def _link_to_path_present(
@@ -402,9 +399,7 @@ def _check_tm_symbol_on_first_use(
         )
 
 
-def _check_trademark_attribution(
-    page: web.FetchedPage, report: ComplianceReport
-) -> None:
+def _check_trademark_attribution(page: web.FetchedPage, report: ComplianceReport) -> None:
     blob = page.text_lower
     asf_phrase = "apache software foundation"
     trademark_phrases = (
@@ -412,16 +407,13 @@ def _check_trademark_attribution(
         "registered trademarks of the apache software foundation",
         "trademarks or registered trademarks of the apache software foundation",
     )
-    if any(p in blob for p in trademark_phrases) or (
-        "trademark" in blob and asf_phrase in blob
-    ):
+    if any(p in blob for p in trademark_phrases) or ("trademark" in blob and asf_phrase in blob):
         report.findings.append(
             Finding(
                 rule="trademark_attribution",
                 status=PASS,
                 detail=(
-                    "Page mentions an Apache Software Foundation trademark "
-                    "attribution string."
+                    "Page mentions an Apache Software Foundation trademark attribution string."
                 ),
                 policy_url=POLICY_URLS["attribution"],
             )
@@ -440,13 +432,9 @@ def _check_trademark_attribution(
         )
 
 
-def _check_third_party_trademark_note(
-    page: web.FetchedPage, report: ComplianceReport
-) -> None:
+def _check_third_party_trademark_note(page: web.FetchedPage, report: ComplianceReport) -> None:
     blob = page.text_lower
-    if (
-        "other marks" in blob and "respective owners" in blob
-    ) or "all other marks" in blob:
+    if ("other marks" in blob and "respective owners" in blob) or "all other marks" in blob:
         report.findings.append(
             Finding(
                 rule="third_party_trademark_note",
@@ -494,9 +482,7 @@ _NAV_REQUIREMENTS: list[tuple[str, str, str]] = [
 ]
 
 
-def _check_required_nav_links(
-    page: web.FetchedPage, report: ComplianceReport
-) -> None:
+def _check_required_nav_links(page: web.FetchedPage, report: ComplianceReport) -> None:
     for rule, host_substring, label in _NAV_REQUIREMENTS:
         # Allow project-specific security pages: any /security/ link on the
         # same apache.org host also counts for the security rule.
@@ -649,9 +635,7 @@ def _check_logo_has_tm(page: web.FetchedPage, report: ComplianceReport) -> None:
         )
 
 
-def _check_logo_attribution(
-    page: web.FetchedPage, project: str, report: ComplianceReport
-) -> None:
+def _check_logo_attribution(page: web.FetchedPage, project: str, report: ComplianceReport) -> None:
     """Attribution must mention the project logo when one is shown on the page."""
     has_logo_image = any(
         "logo" in (img.src or "").lower() or "logo" in (img.alt or "").lower()
@@ -686,8 +670,7 @@ def _check_logo_attribution(
                 rule="logo_attribution",
                 status=PASS,
                 detail=(
-                    "Trademark attribution names the project logo "
-                    f"(matched '{matched_phrase}')."
+                    f"Trademark attribution names the project logo (matched '{matched_phrase}')."
                 ),
                 policy_url=POLICY_URLS["attribution"],
             )
@@ -700,7 +683,7 @@ def _check_logo_attribution(
                 detail=(
                     "Page shows a project logo but the trademark attribution does not "
                     "name it. Policy: 'For pages that include the project logo on them, "
-                    "ensure you mention \"... and the Project logo are trademarks ...\" "
+                    'ensure you mention "... and the Project logo are trademarks ..." '
                     "in the attribution.' Accepted phrasings include 'and the Apache "
                     f"{project or '<Name>'} logo' or 'and the {project or '<Name>'} logo'."
                 ),
@@ -709,9 +692,7 @@ def _check_logo_attribution(
         )
 
 
-def _check_incubation_disclaimer(
-    page: web.FetchedPage, report: ComplianceReport
-) -> None:
+def _check_incubation_disclaimer(page: web.FetchedPage, report: ComplianceReport) -> None:
     blob = page.text_lower
     if "undergoing incubation" in blob and "apache software foundation" in blob:
         report.findings.append(
@@ -740,9 +721,7 @@ def _check_incubation_disclaimer(
         )
 
 
-def _check_incubating_suffix(
-    page: web.FetchedPage, project: str, report: ComplianceReport
-) -> None:
+def _check_incubating_suffix(page: web.FetchedPage, project: str, report: ComplianceReport) -> None:
     blob = page.text
     if "Incubating" in blob or "(incubating)" in blob.lower():
         report.findings.append(
@@ -816,9 +795,7 @@ def _check_not_apache_host(page: web.FetchedPage, report: ComplianceReport) -> N
         )
 
 
-def _check_domain_misuse(
-    page: web.FetchedPage, mark: str, report: ComplianceReport
-) -> None:
+def _check_domain_misuse(page: web.FetchedPage, mark: str, report: ComplianceReport) -> None:
     host = page.host
     sld = web.second_level_domain(host)
     fired = False
@@ -1030,9 +1007,7 @@ def is_explainer_page(page: web.FetchedPage) -> bool:
     return any(title.startswith(prefix) for prefix in _EXPLAINER_TITLE_PREFIXES)
 
 
-def _check_branding_form(
-    page: web.FetchedPage, mark: str, report: ComplianceReport
-) -> None:
+def _check_branding_form(page: web.FetchedPage, mark: str, report: ComplianceReport) -> None:
     if not mark:
         report.findings.append(
             Finding(
@@ -1054,9 +1029,7 @@ def _check_branding_form(
         f"Apache {mark} Inside",
     )
     has_approved_brand_form = any(form in blob for form in approved_forms)
-    apache_mark_present = re.search(
-        rf"\bApache\s+{re.escape(mark)}\b", blob, flags=re.IGNORECASE
-    )
+    apache_mark_present = re.search(rf"\bApache\s+{re.escape(mark)}\b", blob, flags=re.IGNORECASE)
     bare_mark_present = re.search(rf"\b{re.escape(mark)}\b", blob)
     nominative_connector = _find_nominative_use(blob, mark)
 
@@ -1198,9 +1171,7 @@ _TRADEMARK_ATTRIBUTION_RE = re.compile(
 )
 
 
-def _check_non_affiliation_disclaimer(
-    page: web.FetchedPage, report: ComplianceReport
-) -> None:
+def _check_non_affiliation_disclaimer(page: web.FetchedPage, report: ComplianceReport) -> None:
     blob = page.text_lower
     phrases = (
         "not affiliated with",
@@ -1265,9 +1236,7 @@ def _check_logo_misuse(page: web.FetchedPage, report: ComplianceReport) -> None:
     # logo images on the page as likely the official Powered-By badge rather
     # than misuse — even when the filename itself doesn't contain "powered".
     page_text_lower = page.text_lower
-    page_has_powered_by = bool(
-        re.search(r"powered\s+by\s+apache\b", page_text_lower)
-    )
+    page_has_powered_by = bool(re.search(r"powered\s+by\s+apache\b", page_text_lower))
 
     for img in page.images:
         src = (img.src or "").lower()
@@ -1327,9 +1296,7 @@ def _check_logo_misuse(page: web.FetchedPage, report: ComplianceReport) -> None:
     )
 
 
-def _check_credit_link(
-    page: web.FetchedPage, mark: str, report: ComplianceReport
-) -> None:
+def _check_credit_link(page: web.FetchedPage, mark: str, report: ComplianceReport) -> None:
     link = _link_to_path_present(page.links, "apache.org")
     if link is None:
         report.findings.append(

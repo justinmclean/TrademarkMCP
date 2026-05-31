@@ -25,9 +25,7 @@ class ProjectNamesTests(unittest.TestCase):
     def test_includes_human_name_when_it_differs_from_id(self) -> None:
         # Entry whose human-stripped name is different from the id should
         # contribute both forms.
-        names = projects.project_names(
-            [{"id": "foo-podling", "name": "Apache Foo Pipelines"}]
-        )
+        names = projects.project_names([{"id": "foo-podling", "name": "Apache Foo Pipelines"}])
         self.assertIn("foo-podling", names)
         self.assertIn("Foo Pipelines", names)
 
@@ -45,12 +43,14 @@ class ProjectNamesTests(unittest.TestCase):
 class MergeProjectsTests(unittest.TestCase):
     def test_drops_graduated_podling_in_favor_of_committee(self) -> None:
         committees = [
-            {"id": "hugegraph", "name": "Apache HugeGraph",
-             "shortdesc": "A large-scale graph database"},
+            {
+                "id": "hugegraph",
+                "name": "Apache HugeGraph",
+                "shortdesc": "A large-scale graph database",
+            },
         ]
         podlings = [
-            {"id": "hugegraph", "name": "HugeGraph (Incubating)",
-             "status": "graduated"},
+            {"id": "hugegraph", "name": "HugeGraph (Incubating)", "status": "graduated"},
             {"id": "polaris", "name": "Polaris (Incubating)", "status": "current"},
         ]
         merged = projects._merge_projects(committees, podlings)
@@ -64,9 +64,7 @@ class MergeProjectsTests(unittest.TestCase):
         self.assertIn("polaris", ids)
 
     def test_skips_entries_without_id(self) -> None:
-        merged = projects._merge_projects(
-            [{"name": "no id here"}], [{"id": "foo", "name": "Foo"}]
-        )
+        merged = projects._merge_projects([{"name": "no id here"}], [{"id": "foo", "name": "Foo"}])
         self.assertEqual([e["id"] for e in merged], ["foo"])
 
 
@@ -75,9 +73,7 @@ class ProjectNamesIncubatingTests(unittest.TestCase):
         # A live podling: id=polaris, name="Polaris (Incubating)".
         # The cleaned name lowercases to "polaris" — matches id — so we should
         # NOT emit "Polaris (Incubating)" as a second name.
-        names = projects.project_names(
-            [{"id": "polaris", "name": "Polaris (Incubating)"}]
-        )
+        names = projects.project_names([{"id": "polaris", "name": "Polaris (Incubating)"}])
         self.assertEqual(names, ["polaris"])
 
 
@@ -134,6 +130,7 @@ class CacheTests(unittest.TestCase):
             # Force the mtime well into the past.
             old = time.time() - 99999
             import os
+
             os.utime(path, (old, old))
             self.assertIsNone(projects._load_cache(path, ttl_seconds=3600))
 

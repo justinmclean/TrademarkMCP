@@ -51,9 +51,7 @@ def github_search(name: str, timeout: float = DEFAULT_TIMEOUT_SECONDS) -> dict:
                     }
                 )
         elif status == 403:
-            out["error"] = (
-                "GitHub rate limit — search manually at https://github.com/search"
-            )
+            out["error"] = "GitHub rate limit — search manually at https://github.com/search"
         else:
             out["error"] = f"GitHub returned HTTP {status}"
     except urllib.error.HTTPError as exc:
@@ -118,9 +116,7 @@ def npm_search(name: str, timeout: float = DEFAULT_TIMEOUT_SECONDS) -> dict:
     return out
 
 
-def run_external_searches(
-    name: str, timeout: float = DEFAULT_TIMEOUT_SECONDS
-) -> dict[str, dict]:
+def run_external_searches(name: str, timeout: float = DEFAULT_TIMEOUT_SECONDS) -> dict[str, dict]:
     """Run GitHub, PyPI, and npm lookups concurrently."""
     with concurrent.futures.ThreadPoolExecutor(max_workers=3) as pool:
         futures = {
@@ -168,9 +164,7 @@ def trademark_search_urls(name: str) -> dict[str, dict]:
         },
         "SourceForge": {
             "url": f"https://sourceforge.net/directory/?q={urllib.parse.quote(name)}",
-            "instructions": (
-                f"Search SourceForge for '{name}' and note any matching projects."
-            ),
+            "instructions": (f"Search SourceForge for '{name}' and note any matching projects."),
             "required": True,
         },
     }
@@ -192,8 +186,7 @@ def assess_findings(
     gh_total = github.get("total_count", 0)
 
     directly_named = [
-        h for h in gh_hits
-        if name_lower in (h.get("name", "") or "").lower().split("/")[-1]
+        h for h in gh_hits if name_lower in (h.get("name", "") or "").lower().split("/")[-1]
     ]
 
     if directly_named:
@@ -217,8 +210,7 @@ def assess_findings(
         ver = pypi.get("version") or "0.0.0"
         summary = pypi.get("summary") or "no description"
         evidence.append(
-            f"PyPI package named '{name}' exists (v{ver}): {summary} — "
-            f"{pypi.get('url', '')}"
+            f"PyPI package named '{name}' exists (v{ver}): {summary} — {pypi.get('url', '')}"
         )
     else:
         notes.append(f"PyPI: no package named '{name}' found.")
@@ -227,8 +219,7 @@ def assess_findings(
         ver = npm.get("latest_version") or "0.0.0"
         desc = npm.get("description") or "no description"
         evidence.append(
-            f"npm package named '{name_lower}' exists (v{ver}): {desc} — "
-            f"{npm.get('url', '')}"
+            f"npm package named '{name_lower}' exists (v{ver}): {desc} — {npm.get('url', '')}"
         )
     else:
         notes.append(f"npm: no package named '{name_lower}' found.")

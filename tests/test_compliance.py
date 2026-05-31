@@ -89,18 +89,14 @@ class CheckProjectWebsiteTests(unittest.TestCase):
 
     def test_podling_stage_runs_incubation_checks(self) -> None:
         page = _page("https://foo.apache.org/", PODLING_COMPLIANT_HTML)
-        report = compliance.check_project_website(
-            page, project_name="Foo", stage="podling"
-        )
+        report = compliance.check_project_website(page, project_name="Foo", stage="podling")
         statuses = _statuses(report)
         self.assertEqual(statuses["incubation_disclaimer"], "pass")
         self.assertEqual(statuses["incubating_suffix"], "pass")
 
     def test_podling_stage_flags_missing_disclaimer(self) -> None:
         page = _page("https://foo.apache.org/", COMPLIANT_PROJECT_HTML)
-        report = compliance.check_project_website(
-            page, project_name="Foo", stage="podling"
-        )
+        report = compliance.check_project_website(page, project_name="Foo", stage="podling")
         statuses = _statuses(report)
         self.assertEqual(statuses["incubation_disclaimer"], "fail")
         self.assertEqual(statuses["incubating_suffix"], "fail")

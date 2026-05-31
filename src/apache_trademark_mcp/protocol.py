@@ -19,9 +19,7 @@ JsonRpcPayloadResponse = JsonRpcResponse | list[JsonRpcResponse]
 
 
 def valid_message_id(value: Any) -> bool:
-    return value is None or (
-        isinstance(value, (str, int, float)) and not isinstance(value, bool)
-    )
+    return value is None or (isinstance(value, (str, int, float)) and not isinstance(value, bool))
 
 
 def request_id(message: Any) -> Any:
@@ -50,18 +48,14 @@ def jsonrpc_error(
     }
 
 
-def invalid_request(
-    message_id: Any, message: str, field: str | None = None
-) -> JsonRpcResponse:
+def invalid_request(message_id: Any, message: str, field: str | None = None) -> JsonRpcResponse:
     data: dict[str, Any] = {"type": "invalid_request"}
     if field is not None:
         data["field"] = field
     return jsonrpc_error(message_id, -32600, message, data)
 
 
-def invalid_params(
-    message_id: Any, message: str, field: str | None = None
-) -> JsonRpcResponse:
+def invalid_params(message_id: Any, message: str, field: str | None = None) -> JsonRpcResponse:
     data: dict[str, Any] = {"type": "invalid_params"}
     if field is not None:
         data["field"] = field
@@ -132,18 +126,14 @@ def handle_message(message: Any) -> JsonRpcResponse:
 
     message_id = request_id(message)
     if "id" in message and not valid_message_id(message["id"]):
-        return invalid_request(
-            None, "Request id must be a string, number, or null", "id"
-        )
+        return invalid_request(None, "Request id must be a string, number, or null", "id")
 
     if message.get("jsonrpc") != JSONRPC_VERSION:
         return invalid_request(message_id, "JSON-RPC version must be '2.0'", "jsonrpc")
 
     method = message.get("method")
     if not isinstance(method, str) or not method:
-        return invalid_request(
-            message_id, "Request method must be a non-empty string", "method"
-        )
+        return invalid_request(message_id, "Request method must be a non-empty string", "method")
 
     params = message.get("params", {})
     if params is None:
@@ -173,9 +163,7 @@ def handle_message(message: Any) -> JsonRpcResponse:
         if not isinstance(name, str):
             return invalid_params(message_id, "Tool name must be a string", "name")
         if not isinstance(arguments, dict):
-            return invalid_params(
-                message_id, "Tool arguments must be an object", "arguments"
-            )
+            return invalid_params(message_id, "Tool arguments must be an object", "arguments")
         try:
             return jsonrpc_result(message_id, call_tool(name, arguments))
         except ValueError as exc:
@@ -192,12 +180,8 @@ def handle_message(message: Any) -> JsonRpcResponse:
 def handle_payload(payload: Any) -> JsonRpcPayloadResponse:
     if isinstance(payload, list):
         if not payload:
-            return invalid_request(
-                None, "JSON-RPC batch must contain at least one request"
-            )
-        responses = [
-            response for item in payload if (response := handle_message(item))
-        ]
+            return invalid_request(None, "JSON-RPC batch must contain at least one request")
+        responses = [response for item in payload if (response := handle_message(item))]
         return responses
     return handle_message(payload)
 
@@ -223,9 +207,7 @@ def main(argv: list[str] | None = None) -> int:
         try:
             payload = json.loads(raw)
         except json.JSONDecodeError:
-            response = jsonrpc_error(
-                None, -32700, "Parse error", {"type": "parse_error"}
-            )
+            response = jsonrpc_error(None, -32700, "Parse error", {"type": "parse_error"})
         else:
             response = handle_payload(payload)
         if response:

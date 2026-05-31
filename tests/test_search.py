@@ -30,7 +30,9 @@ class AssessFindingsTests(unittest.TestCase):
         pypi = {"found": False}
         npm = {"found": False}
         out = search.assess_findings("Stratus", github, pypi, npm, "a streaming engine")
-        self.assertTrue(any("directly named 'Stratus'" in e for e in out["evidence_of_existing_use"]))
+        self.assertTrue(
+            any("directly named 'Stratus'" in e for e in out["evidence_of_existing_use"])
+        )
 
     def test_no_directly_named_repo_falls_to_notes(self) -> None:
         github = {"hits": [], "total_count": 0, "error": None}
@@ -51,7 +53,9 @@ class AssessFindingsTests(unittest.TestCase):
         }
         npm = {"found": False}
         out = search.assess_findings("Stratus", github, pypi, npm, "any description")
-        self.assertTrue(any("PyPI package named 'Stratus'" in e for e in out["evidence_of_existing_use"]))
+        self.assertTrue(
+            any("PyPI package named 'Stratus'" in e for e in out["evidence_of_existing_use"])
+        )
 
 
 class JiraTemplateTests(unittest.TestCase):

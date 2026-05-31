@@ -176,9 +176,7 @@ def validate_name(
     warnings.extend(format_warnings)
 
     asf_projects = projects.fetch_projects(cache_dir=_cache_dir())
-    asf_conflicts, nearby_asf_names = projects.find_name_conflicts(
-        resolved_name, asf_projects
-    )
+    asf_conflicts, nearby_asf_names = projects.find_name_conflicts(resolved_name, asf_projects)
     for m in asf_conflicts:
         if m["match_type"] == "exact":
             blocking.append(
@@ -218,9 +216,7 @@ def validate_name(
     }
 
 
-def search_asf_projects(
-    query: str, min_similarity: float = 0.5
-) -> dict[str, Any]:
+def search_asf_projects(query: str, min_similarity: float = 0.5) -> dict[str, Any]:
     """Fuzzy-search the ASF project list for names similar to ``query``."""
     resolved_query = _require_non_empty_string(query, "query")
     threshold = _optional_number(min_similarity, "min_similarity", 0.5)
@@ -273,18 +269,14 @@ def get_policy_guidance(topic: str) -> dict[str, Any]:
     return policy.policy_guidance(resolved)
 
 
-def perform_name_search(
-    proposed_name: str, technical_description: str = ""
-) -> dict[str, Any]:
+def perform_name_search(proposed_name: str, technical_description: str = "") -> dict[str, Any]:
     """Run GitHub/PyPI/npm name searches and assemble a PODLINGNAMESEARCH JIRA body."""
     resolved_name = _require_non_empty_string(proposed_name, "proposed_name")
     resolved_description = _optional_string(technical_description, "technical_description")
 
     results = search.run_external_searches(resolved_name)
     github, pypi, npm = results["github"], results["pypi"], results["npm"]
-    assessment = search.assess_findings(
-        resolved_name, github, pypi, npm, resolved_description
-    )
+    assessment = search.assess_findings(resolved_name, github, pypi, npm, resolved_description)
 
     return {
         "proposed_name": resolved_name,
@@ -299,7 +291,7 @@ def perform_name_search(
         "trademark_search_urls": search.trademark_search_urls(resolved_name),
         "manual_searches_still_required": [
             "USPTO (required) — open the URL above, run the query, record exact results in JIRA",
-            f'Google — search for \'"{resolved_name}" software\', note any products',
+            f"Google — search for '\"{resolved_name}\" software', note any products",
             f"SourceForge — search for '{resolved_name}', note any matching projects",
         ],
         "jira_ticket_template": search.jira_template(
@@ -331,9 +323,7 @@ def check_project_website(
     resolved_project = _optional_string(project_name, "project_name")
     resolved_stage = _optional_string(stage, "stage") or "tlp"
     if resolved_stage not in policy.VALID_BRANDING_STAGES:
-        raise ValueError(
-            f"'stage' must be one of: {', '.join(policy.VALID_BRANDING_STAGES)}"
-        )
+        raise ValueError(f"'stage' must be one of: {', '.join(policy.VALID_BRANDING_STAGES)}")
 
     page = web.fetch_page(resolved_url)
     report = compliance.check_project_website(
