@@ -36,7 +36,11 @@ class ProjectNamesTests(unittest.TestCase):
         self.assertEqual(names, ["kafka"])
 
     def test_ignores_non_dict_entries(self) -> None:
-        names = projects.project_names([{"id": "kafka"}, "garbage", None])
+        # Deliberately pass garbage to exercise the runtime guard in
+        # project_names; mypy correctly flags the bad types — silence it.
+        names = projects.project_names(
+            [{"id": "kafka"}, "garbage", None]  # type: ignore[list-item]
+        )
         self.assertEqual(names, ["kafka"])
 
 
