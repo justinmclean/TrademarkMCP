@@ -149,3 +149,5 @@ Common tasks are available through `make`:
 - This server reports facts only. It does not opine on whether a name is "confusingly similar" — that is a legal judgement made by `trademarks@apache.org` and the VP, Brand Management.
 - A `PASS` verdict from `validate_name` does **not** mean the name is approved. The full PODLINGNAMESEARCH process — internet search, USPTO search, JIRA ticket, VP Brand Management approval — is still required.
 - All HTTP calls are made through the Python standard library; the package has no runtime dependencies.
+
+TrademarkMCP is an independent tool and is not a project of the Apache Software Foundation. Apache and related marks are trademarks of The Apache Software Foundation.
