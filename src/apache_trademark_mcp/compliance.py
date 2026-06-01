@@ -363,9 +363,7 @@ def _scan_bare_other_asf_marks(
         # Case-sensitive search for any "Apache <Mark>" mention anywhere on
         # the page. If present, the page has already established the brand
         # form and bare follow-on uses are acceptable.
-        apache_form_re = re.compile(
-            rf"\bApache\s+{re.escape(mark)}\b", flags=re.IGNORECASE
-        )
+        apache_form_re = re.compile(rf"\bApache\s+{re.escape(mark)}\b", flags=re.IGNORECASE)
         if apache_form_re.search(text):
             continue
 
@@ -442,9 +440,7 @@ def _check_bare_other_asf_marks(
         return
 
     names = ", ".join(b["mark"] for b in bare[:10])
-    evidence_lines = "; ".join(
-        f"{b['mark']} (×{b['count']}): {b['evidence']}" for b in bare[:5]
-    )
+    evidence_lines = "; ".join(f"{b['mark']} (×{b['count']}): {b['evidence']}" for b in bare[:5])
     report.findings.append(
         Finding(
             rule="bare_other_asf_marks",
@@ -502,9 +498,7 @@ def check_project_website(
     _check_logo_attribution(page, project, report)
     # ASF project pages have no nominative-use exception — bare references to
     # sibling ASF projects are a policy violation.
-    _check_bare_other_asf_marks(
-        page, project, report, marks=known_marks, fail_status=FAIL
-    )
+    _check_bare_other_asf_marks(page, project, report, marks=known_marks, fail_status=FAIL)
 
     if stage_lc == "podling":
         _check_incubation_disclaimer(page, report)
@@ -1041,9 +1035,7 @@ def check_third_party_use(
     _check_credit_link(page, resolved_mark, report)
     # On third-party pages bare nominative use is more often defensible, so
     # surface bare sibling-mark references as a WARN rather than a FAIL.
-    _check_bare_other_asf_marks(
-        page, resolved_mark, report, marks=known_marks, fail_status=WARN
-    )
+    _check_bare_other_asf_marks(page, resolved_mark, report, marks=known_marks, fail_status=WARN)
 
     return report
 

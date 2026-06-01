@@ -405,15 +405,11 @@ class BareOtherAsfMarksTests(unittest.TestCase):
             "</body></html>"
         )
         page = _page("https://foo.apache.org/", html)
-        report = compliance.check_project_website(
-            page, project_name="Foo", known_marks=self._MARKS
-        )
+        report = compliance.check_project_website(page, project_name="Foo", known_marks=self._MARKS)
         statuses = _statuses(report)
         self.assertEqual(statuses["bare_other_asf_marks"], "fail")
         # Evidence should name both marks.
-        finding = next(
-            f for f in report.findings if f.rule == "bare_other_asf_marks"
-        )
+        finding = next(f for f in report.findings if f.rule == "bare_other_asf_marks")
         self.assertIn("Spark", finding.detail)
         self.assertIn("Flink", finding.detail)
 
@@ -429,9 +425,7 @@ class BareOtherAsfMarksTests(unittest.TestCase):
             "</body></html>"
         )
         page = _page("https://foo.apache.org/", html)
-        report = compliance.check_project_website(
-            page, project_name="Foo", known_marks=self._MARKS
-        )
+        report = compliance.check_project_website(page, project_name="Foo", known_marks=self._MARKS)
         statuses = _statuses(report)
         self.assertEqual(statuses["bare_other_asf_marks"], "pass")
 
@@ -456,9 +450,7 @@ class BareOtherAsfMarksTests(unittest.TestCase):
     def test_clean_compliant_page_passes(self) -> None:
         # Existing compliant fixture mentions no other ASF marks.
         page = _page("https://foo.apache.org/", COMPLIANT_PROJECT_HTML)
-        report = compliance.check_project_website(
-            page, project_name="Foo", known_marks=self._MARKS
-        )
+        report = compliance.check_project_website(page, project_name="Foo", known_marks=self._MARKS)
         statuses = _statuses(report)
         self.assertEqual(statuses["bare_other_asf_marks"], "pass")
 
@@ -474,9 +466,7 @@ class BareOtherAsfMarksTests(unittest.TestCase):
             "</body></html>"
         )
         page = _page("https://foo.apache.org/", html)
-        report = compliance.check_project_website(
-            page, project_name="Foo", known_marks=self._MARKS
-        )
+        report = compliance.check_project_website(page, project_name="Foo", known_marks=self._MARKS)
         statuses = _statuses(report)
         self.assertEqual(statuses["bare_other_asf_marks"], "pass")
 
@@ -493,9 +483,7 @@ class BareOtherAsfMarksTests(unittest.TestCase):
             "</body></html>"
         )
         page = _page("https://yoyodyne.com/", html)
-        report = compliance.check_third_party_use(
-            page, mark="Foo", known_marks=self._MARKS
-        )
+        report = compliance.check_third_party_use(page, mark="Foo", known_marks=self._MARKS)
         statuses = _statuses(report)
         self.assertEqual(statuses["bare_other_asf_marks"], "warn")
 
@@ -503,9 +491,7 @@ class BareOtherAsfMarksTests(unittest.TestCase):
         # If the caller can't provide a marks list (offline, no cache), the
         # finding must report SKIP rather than silently pass or fail.
         page = _page("https://foo.apache.org/", COMPLIANT_PROJECT_HTML)
-        report = compliance.check_project_website(
-            page, project_name="Foo", known_marks=None
-        )
+        report = compliance.check_project_website(page, project_name="Foo", known_marks=None)
         statuses = _statuses(report)
         self.assertEqual(statuses["bare_other_asf_marks"], "skip")
 
@@ -514,9 +500,7 @@ class BareOtherAsfMarksTests(unittest.TestCase):
             "Foo Engine accelerates Spark workloads and Flink jobs. "
             "Built for big-data teams."
         )
-        results = compliance._scan_bare_other_asf_marks(
-            text, marks=self._MARKS, project="Foo"
-        )
+        results = compliance._scan_bare_other_asf_marks(text, marks=self._MARKS, project="Foo")
         marks = {r["mark"] for r in results}
         self.assertIn("Spark", marks)
         self.assertIn("Flink", marks)
@@ -525,9 +509,7 @@ class BareOtherAsfMarksTests(unittest.TestCase):
 
     def test_scan_helper_skips_when_apache_form_present(self) -> None:
         text = "Built on Apache Spark. Spark provides distributed compute."
-        results = compliance._scan_bare_other_asf_marks(
-            text, marks=self._MARKS, project="Foo"
-        )
+        results = compliance._scan_bare_other_asf_marks(text, marks=self._MARKS, project="Foo")
         self.assertEqual([r["mark"] for r in results if r["mark"] == "Spark"], [])
 
 
