@@ -383,5 +383,201 @@ class ThirdPartyImprovementsTests(unittest.TestCase):
             self.assertIn(f["severity"], {"critical", "important", "advisory"})
 
 
+class BareOtherAsfMarksTests(unittest.TestCase):
+    """Covers the new bare_other_asf_marks rule that flags sibling-project
+    marks used without the 'Apache' prefix.
+
+    Marks are normally pulled from the live ASF project feed; tests pass a
+    small explicit list so they remain stable and offline."""
+
+    _MARKS = ["Spark", "Flink", "Kafka", "Hadoop", "Cassandra"]
+
+    def test_project_page_with_bare_spark_and_flink_fails(self) -> None:
+        # Page mentions "Spark" and "Flink" but never "Apache Spark"/"Apache
+        # Flink". On an ASF project page this is a hard FAIL.
+        html = (
+            "<html><body>"
+            "<h1>Apache Foo&trade;</h1>"
+            "<p>Apache Foo is an accelerator for big data engines like "
+            "Spark and Flink.</p>"
+            "<footer>Apache Foo and Foo are trademarks of The Apache "
+            "Software Foundation.</footer>"
+            "</body></html>"
+        )
+        page = _page("https://foo.apache.org/", html)
+        report = compliance.check_project_website(
+            page, project_name="Foo", known_marks=self._MARKS
+        )
+        statuses = _statuses(report)
+        self.assertEqual(statuses["bare_other_asf_marks"], "fail")
+        # Evidence should name both marks.
+        finding = next(
+            f for f in report.findings if f.rule == "bare_other_asf_marks"
+        )
+        self.assertIn("Spark", finding.detail)
+        self.assertIn("Flink", finding.detail)
+
+    def test_project_page_with_apache_spark_form_passes(self) -> None:
+        # The Apache form establishes the brand — bare follow-on uses are fine.
+        html = (
+            "<html><body>"
+            "<h1>Apache Foo&trade;</h1>"
+            "<p>Apache Foo accelerates Apache Spark and Apache Flink. "
+            "Spark and Flink workloads benefit from Foo's vectorisation.</p>"
+            "<footer>Apache Foo is a trademark of The Apache Software "
+            "Foundation.</footer>"
+            "</body></html>"
+        )
+        page = _page("https://foo.apache.org/", html)
+        report = compliance.check_project_website(
+            page, project_name="Foo", known_marks=self._MARKS
+        )
+        statuses = _statuses(report)
+        self.assertEqual(statuses["bare_other_asf_marks"], "pass")
+
+    def test_project_page_does_not_flag_its_own_name(self) -> None:
+        # When the project being checked is 'Spark' itself, bare "Spark" must
+        # not be flagged.
+        html = (
+            "<html><body>"
+            "<h1>Apache Spark&trade;</h1>"
+            "<p>Spark is a unified analytics engine.</p>"
+            "<footer>Apache Spark is a trademark of The Apache Software "
+            "Foundation.</footer>"
+            "</body></html>"
+        )
+        page = _page("https://spark.apache.org/", html)
+        report = compliance.check_project_website(
+            page, project_name="Spark", known_marks=self._MARKS
+        )
+        statuses = _statuses(report)
+        self.assertEqual(statuses["bare_other_asf_marks"], "pass")
+
+    def test_clean_compliant_page_passes(self) -> None:
+        # Existing compliant fixture mentions no other ASF marks.
+        page = _page("https://foo.apache.org/", COMPLIANT_PROJECT_HTML)
+        report = compliance.check_project_website(
+            page, project_name="Foo", known_marks=self._MARKS
+        )
+        statuses = _statuses(report)
+        self.assertEqual(statuses["bare_other_asf_marks"], "pass")
+
+    def test_case_sensitive_lowercase_does_not_match(self) -> None:
+        # Lowercase 'spark' in running text (e.g. 'a spark of inspiration') is
+        # not a brand reference and must not be flagged.
+        html = (
+            "<html><body>"
+            "<h1>Apache Foo&trade;</h1>"
+            "<p>Apache Foo lit a spark of innovation.</p>"
+            "<footer>Apache Foo is a trademark of The Apache Software "
+            "Foundation.</footer>"
+            "</body></html>"
+        )
+        page = _page("https://foo.apache.org/", html)
+        report = compliance.check_project_website(
+            page, project_name="Foo", known_marks=self._MARKS
+        )
+        statuses = _statuses(report)
+        self.assertEqual(statuses["bare_other_asf_marks"], "pass")
+
+    def test_third_party_bare_mark_warns_not_fails(self) -> None:
+        # Third-party pages are softer — bare references warn, not fail,
+        # because nominative use is more often plausible.
+        html = (
+            "<html><body>"
+            "<h1>YoyoStream</h1>"
+            "<p>YoyoStream is Powered By Apache Foo and also integrates "
+            "with Kafka and Hadoop.</p>"
+            "<p>Not affiliated with the Apache Software Foundation.</p>"
+            '<a href="https://foo.apache.org/">upstream</a>'
+            "</body></html>"
+        )
+        page = _page("https://yoyodyne.com/", html)
+        report = compliance.check_third_party_use(
+            page, mark="Foo", known_marks=self._MARKS
+        )
+        statuses = _statuses(report)
+        self.assertEqual(statuses["bare_other_asf_marks"], "warn")
+
+    def test_missing_marks_list_skips_check(self) -> None:
+        # If the caller can't provide a marks list (offline, no cache), the
+        # finding must report SKIP rather than silently pass or fail.
+        page = _page("https://foo.apache.org/", COMPLIANT_PROJECT_HTML)
+        report = compliance.check_project_website(
+            page, project_name="Foo", known_marks=None
+        )
+        statuses = _statuses(report)
+        self.assertEqual(statuses["bare_other_asf_marks"], "skip")
+
+    def test_scan_helper_returns_evidence(self) -> None:
+        text = (
+            "Foo Engine accelerates Spark workloads and Flink jobs. "
+            "Built for big-data teams."
+        )
+        results = compliance._scan_bare_other_asf_marks(
+            text, marks=self._MARKS, project="Foo"
+        )
+        marks = {r["mark"] for r in results}
+        self.assertIn("Spark", marks)
+        self.assertIn("Flink", marks)
+        for r in results:
+            self.assertIn(r["mark"], r["evidence"])
+
+    def test_scan_helper_skips_when_apache_form_present(self) -> None:
+        text = "Built on Apache Spark. Spark provides distributed compute."
+        results = compliance._scan_bare_other_asf_marks(
+            text, marks=self._MARKS, project="Foo"
+        )
+        self.assertEqual([r["mark"] for r in results if r["mark"] == "Spark"], [])
+
+
+class ProjectNamesForBareScanTests(unittest.TestCase):
+    """Covers the helper that extracts a scan-ready mark list from the live
+    ASF projects feed."""
+
+    def test_strips_apache_prefix_and_incubating_suffix(self) -> None:
+        projects = [
+            {"id": "spark", "name": "Apache Spark"},
+            {"id": "auron", "name": "Apache Auron (Incubating)", "status": "current"},
+        ]
+        names = compliance.project_names_for_bare_scan(projects)
+        self.assertIn("Spark", names)
+        self.assertIn("Auron", names)
+
+    def test_excludes_retired_podlings(self) -> None:
+        projects = [
+            {"id": "spark", "name": "Apache Spark"},
+            {"id": "wave", "name": "Apache Wave", "status": "retired"},
+        ]
+        names = compliance.project_names_for_bare_scan(projects)
+        self.assertIn("Spark", names)
+        self.assertNotIn("Wave", names)
+
+    def test_excludes_ambiguous_english_words(self) -> None:
+        projects = [
+            {"id": "storm", "name": "Apache Storm"},
+            {"id": "camel", "name": "Apache Camel"},
+            {"id": "kafka", "name": "Apache Kafka"},
+        ]
+        names = compliance.project_names_for_bare_scan(projects)
+        self.assertIn("Kafka", names)
+        self.assertNotIn("Storm", names)
+        self.assertNotIn("Camel", names)
+
+    def test_excludes_short_names(self) -> None:
+        # 3-char names match too eagerly in body text — should be filtered.
+        projects = [
+            {"id": "orc", "name": "Apache ORC"},
+            {"id": "kafka", "name": "Apache Kafka"},
+        ]
+        names = compliance.project_names_for_bare_scan(projects)
+        self.assertIn("Kafka", names)
+        self.assertNotIn("ORC", names)
+
+    def test_empty_input_returns_empty(self) -> None:
+        self.assertEqual(compliance.project_names_for_bare_scan(None), [])
+        self.assertEqual(compliance.project_names_for_bare_scan([]), [])
+
+
 if __name__ == "__main__":
     unittest.main()

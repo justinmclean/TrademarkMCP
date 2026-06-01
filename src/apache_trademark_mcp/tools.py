@@ -328,10 +328,13 @@ def check_project_website(
         raise ValueError(f"'stage' must be one of: {', '.join(policy.VALID_BRANDING_STAGES)}")
 
     page = web.fetch_page(resolved_url)
+    asf_projects = projects.fetch_projects(cache_dir=_cache_dir())
+    known_marks = compliance.project_names_for_bare_scan(asf_projects)
     report = compliance.check_project_website(
         page,
         project_name=resolved_project or None,
         stage=resolved_stage,
+        known_marks=known_marks,
     )
 
     return {
@@ -359,7 +362,11 @@ def check_third_party_use(
     resolved_mark = _optional_string(mark, "mark")
 
     page = web.fetch_page(resolved_url)
-    report = compliance.check_third_party_use(page, mark=resolved_mark or None)
+    asf_projects = projects.fetch_projects(cache_dir=_cache_dir())
+    known_marks = compliance.project_names_for_bare_scan(asf_projects)
+    report = compliance.check_third_party_use(
+        page, mark=resolved_mark or None, known_marks=known_marks
+    )
 
     return {
         **report.to_dict(),

@@ -61,6 +61,7 @@ _RULE_SEVERITY = {
     "logo_attribution": IMPORTANT,
     "tm_symbol_on_first_use": IMPORTANT,
     "third_party_trademark_note": ADVISORY,
+    "bare_other_asf_marks": IMPORTANT,
 }
 
 
@@ -216,6 +217,257 @@ def _link_to_path_present(
 
 
 # ---------------------------------------------------------------------------
+# Bare-mark detection for other ASF projects
+# ---------------------------------------------------------------------------
+
+# Project names that overlap with common English words and would generate
+# excessive false positives if scanned bare. The list is intentionally short:
+# if you're going to err, err on the side of fewer flags rather than more.
+# The mark list itself is sourced from the live ASF project feed (see
+# ``project_names_for_bare_scan`` below) — this is purely a stoplist applied
+# *after* fetching, so new podlings whose names happen to collide with
+# English words don't immediately start spraying false positives.
+AMBIGUOUS_ENGLISH_PROJECT_NAMES: frozenset[str] = frozenset(
+    {
+        "Ant",
+        "Any23",
+        "Bee",
+        "Bigtop",
+        "Bloodhound",
+        "Camel",
+        "Crail",
+        "Etch",
+        "Falcon",
+        "Felix",
+        "Forrest",
+        "Fortress",
+        "Helix",
+        "Heron",
+        "Hive",
+        "Hop",
+        "James",
+        "Lens",
+        "Logging",
+        "Marvin",
+        "Nemo",
+        "Pig",
+        "Pony",
+        "Portals",
+        "Range",
+        "Roller",
+        "Sentry",
+        "Shale",
+        "Spot",
+        "Storm",
+        "Tomee",
+        "Trafodion",
+        "Traffic",
+        "Twill",
+        "Unomi",
+        "Usergrid",
+        "Wave",
+        "Whimsy",
+        "Zest",
+        "Zeta",
+    }
+)
+
+
+def project_names_for_bare_scan(
+    projects: Iterable[dict] | None,
+    *,
+    stoplist: Iterable[str] = AMBIGUOUS_ENGLISH_PROJECT_NAMES,
+    min_length: int = 4,
+) -> list[str]:
+    """Return capitalized ASF project names suitable for a bare-mark scan.
+
+    Takes the parsed ASF projects feed (committees + podlings) and extracts
+    project names in the form most useful for case-sensitive matching:
+    capitalized human names like ``Spark`` and ``Flink`` (not the lowercase
+    ids like ``spark``).
+
+    Filters out:
+      * empty / whitespace-only names
+      * names shorter than ``min_length`` (avoids 3-letter acronyms that
+        match too eagerly in body text)
+      * names that don't start with an uppercase letter (lowercase ids would
+        match common English words on a case-sensitive scan)
+      * names in ``stoplist`` (common-English-word overlaps)
+    """
+    if not projects:
+        return []
+    stop_lc = {s.strip().lower() for s in stoplist if s}
+    seen: set[str] = set()
+    out: list[str] = []
+    for entry in projects:
+        if not isinstance(entry, dict):
+            continue
+        # Skip retired podlings — they're no longer active ASF marks and
+        # shouldn't trigger branding-policy violations on third-party or
+        # sibling-project pages. Graduated podlings reach this loop via
+        # their committee entry (no status field), so this filter only
+        # drops genuinely retired projects.
+        if str(entry.get("status", "")).strip().lower() == "retired":
+            continue
+        candidates = (
+            str(entry.get("name", "")),
+            # Some podlings only carry the id; capitalise the first letter
+            # so it survives the case-sensitive scan.
+            str(entry.get("id", "")).capitalize(),
+        )
+        for raw in candidates:
+            name = re.sub(r"^[Aa]pache\s+", "", raw).strip()
+            name = re.sub(r"\s*\(\s*incubating\s*\)\s*$", "", name, flags=re.IGNORECASE)
+            if len(name) < min_length:
+                continue
+            if not name[:1].isupper():
+                continue
+            if name.lower() in stop_lc:
+                continue
+            if name in seen:
+                continue
+            seen.add(name)
+            out.append(name)
+    return out
+
+
+def _scan_bare_other_asf_marks(
+    text: str,
+    *,
+    marks: Iterable[str],
+    project: str = "",
+    excluded_marks: Iterable[str] = (),
+) -> list[dict]:
+    """Return a list of bare ASF mark mentions found in ``text``.
+
+    A mark is considered "bare" if a capitalized, word-bounded occurrence of
+    the mark appears in ``text`` while the ``Apache <Mark>`` form never does.
+    The check is case-sensitive on the mark itself ("Spark" matches, "spark"
+    does not) to avoid noise from common-English-word lowercase usage.
+
+    Each result dict carries: ``mark`` (the ASF project name), ``count``
+    (number of bare occurrences), and ``evidence`` (short surrounding snippet
+    of the first bare occurrence).
+
+    ``project`` is excluded from the scan so the page's own name is not
+    flagged. ``excluded_marks`` removes marks the caller knows are safe to
+    skip on this page (e.g. a podling that has explicitly negotiated a
+    naming exception).
+    """
+    if not text:
+        return []
+
+    own_lc = (project or "").strip().lower()
+    excl_lc = {m.strip().lower() for m in excluded_marks if m}
+
+    findings: list[dict] = []
+    for mark in sorted({m for m in marks if m}):
+        mark_lc = mark.lower()
+        if mark_lc == own_lc or mark_lc in excl_lc:
+            continue
+
+        # Case-sensitive search for any "Apache <Mark>" mention anywhere on
+        # the page. If present, the page has already established the brand
+        # form and bare follow-on uses are acceptable.
+        apache_form_re = re.compile(
+            rf"\bApache\s+{re.escape(mark)}\b", flags=re.IGNORECASE
+        )
+        if apache_form_re.search(text):
+            continue
+
+        # Case-sensitive scan for bare occurrences. Word-bounded so 'Spark'
+        # doesn't match 'sparking' or 'Sparkling'.
+        bare_re = re.compile(rf"\b{re.escape(mark)}\b")
+        matches = list(bare_re.finditer(text))
+        if not matches:
+            continue
+
+        first = matches[0]
+        start = max(0, first.start() - 30)
+        end = min(len(text), first.end() + 30)
+        snippet = text[start:end].strip()
+        findings.append(
+            {
+                "mark": mark,
+                "count": len(matches),
+                "evidence": snippet[:200],
+            }
+        )
+
+    return findings
+
+
+def _check_bare_other_asf_marks(
+    page: web.FetchedPage,
+    project: str,
+    report: ComplianceReport,
+    *,
+    marks: Iterable[str] | None,
+    fail_status: str = FAIL,
+    no_match_status: str = PASS,
+) -> None:
+    """Add a finding for any ASF marks used bare on the page.
+
+    ``marks`` is the candidate mark list, normally derived from the live
+    ASF projects feed via :func:`project_names_for_bare_scan`. If ``None``
+    or empty, the check is reported as SKIP — the caller could not supply
+    a project list (e.g. the network is offline and there is no cache).
+
+    ``fail_status`` lets callers downgrade the finding to WARN for pages
+    where nominative use is plausible (third-party sites).
+    """
+    mark_list = list(marks) if marks else []
+    if not mark_list:
+        report.findings.append(
+            Finding(
+                rule="bare_other_asf_marks",
+                status=SKIP,
+                detail=(
+                    "No ASF project list available to scan against. The "
+                    "bare-mark check needs the cached projects.apache.org "
+                    "feed; run refresh_project_cache or check network access."
+                ),
+                policy_url=POLICY_URLS["trademark_policy"],
+            )
+        )
+        return
+
+    bare = _scan_bare_other_asf_marks(page.text, marks=mark_list, project=project)
+    if not bare:
+        report.findings.append(
+            Finding(
+                rule="bare_other_asf_marks",
+                status=no_match_status,
+                detail=(
+                    "No other ASF project marks were found used without the "
+                    "'Apache' prefix."
+                ),
+                policy_url=POLICY_URLS["trademark_policy"],
+            )
+        )
+        return
+
+    names = ", ".join(b["mark"] for b in bare[:10])
+    evidence_lines = "; ".join(
+        f"{b['mark']} (×{b['count']}): {b['evidence']}" for b in bare[:5]
+    )
+    report.findings.append(
+        Finding(
+            rule="bare_other_asf_marks",
+            status=fail_status,
+            detail=(
+                "Page mentions other ASF project mark(s) without ever using "
+                f"the 'Apache <Name>' form: {names}. ASF branding policy "
+                "requires the full 'Apache <ProjectName>' form on first use "
+                "of any ASF mark, including marks of sibling projects."
+            ),
+            policy_url=POLICY_URLS["trademark_policy"],
+            evidence=evidence_lines,
+        )
+    )
+
+
+# ---------------------------------------------------------------------------
 # ASF project website checks
 # ---------------------------------------------------------------------------
 
@@ -225,8 +477,15 @@ def check_project_website(
     *,
     project_name: str | None = None,
     stage: str = "tlp",
+    known_marks: Iterable[str] | None = None,
 ) -> ComplianceReport:
-    """Return a :class:`ComplianceReport` for an Apache project's homepage."""
+    """Return a :class:`ComplianceReport` for an Apache project's homepage.
+
+    ``known_marks`` is the list of capitalised ASF project names to scan for
+    bare usage (e.g. ``["Spark", "Flink", ...]``). Callers normally derive
+    this from the live ASF project feed via
+    :func:`project_names_for_bare_scan`; tests pass an explicit list.
+    """
     report = ComplianceReport(target_url=page.url, final_url=page.final_url)
 
     if page.error:
@@ -247,6 +506,11 @@ def check_project_website(
     _check_apache_org_link(page, report)
     _check_logo_has_tm(page, report)
     _check_logo_attribution(page, project, report)
+    # ASF project pages have no nominative-use exception — bare references to
+    # sibling ASF projects are a policy violation.
+    _check_bare_other_asf_marks(
+        page, project, report, marks=known_marks, fail_status=FAIL
+    )
 
     if stage_lc == "podling":
         _check_incubation_disclaimer(page, report)
@@ -755,8 +1019,13 @@ def check_third_party_use(
     page: web.FetchedPage,
     *,
     mark: str | None = None,
+    known_marks: Iterable[str] | None = None,
 ) -> ComplianceReport:
-    """Return a :class:`ComplianceReport` for a third-party page using ASF marks."""
+    """Return a :class:`ComplianceReport` for a third-party page using ASF marks.
+
+    ``known_marks`` is the list of capitalised ASF project names to scan for
+    bare usage; see :func:`check_project_website` for details.
+    """
     report = ComplianceReport(target_url=page.url, final_url=page.final_url)
 
     if page.error:
@@ -776,6 +1045,11 @@ def check_third_party_use(
     _check_non_affiliation_disclaimer(page, report)
     _check_logo_misuse(page, report)
     _check_credit_link(page, resolved_mark, report)
+    # On third-party pages bare nominative use is more often defensible, so
+    # surface bare sibling-mark references as a WARN rather than a FAIL.
+    _check_bare_other_asf_marks(
+        page, resolved_mark, report, marks=known_marks, fail_status=WARN
+    )
 
     return report
 
