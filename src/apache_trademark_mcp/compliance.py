@@ -430,10 +430,7 @@ def _check_bare_other_asf_marks(
             Finding(
                 rule="bare_other_asf_marks",
                 status=no_match_status,
-                detail=(
-                    "No other ASF project marks were found used without the "
-                    "'Apache' prefix."
-                ),
+                detail=("No other ASF project marks were found used without the 'Apache' prefix."),
                 policy_url=POLICY_URLS["trademark_policy"],
             )
         )

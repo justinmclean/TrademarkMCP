@@ -496,10 +496,7 @@ class BareOtherAsfMarksTests(unittest.TestCase):
         self.assertEqual(statuses["bare_other_asf_marks"], "skip")
 
     def test_scan_helper_returns_evidence(self) -> None:
-        text = (
-            "Foo Engine accelerates Spark workloads and Flink jobs. "
-            "Built for big-data teams."
-        )
+        text = "Foo Engine accelerates Spark workloads and Flink jobs. Built for big-data teams."
         results = compliance._scan_bare_other_asf_marks(text, marks=self._MARKS, project="Foo")
         marks = {r["mark"] for r in results}
         self.assertIn("Spark", marks)
